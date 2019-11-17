@@ -4,13 +4,73 @@
     <meta charset="UTF-8">
     <title>MediCVis - Visualizing Medical Codes</title>
 
-    <!-- Enable D3 and Leaflet -->
-    <script src="http://d3js.org/d3.v3.min.js"></script>
+
+    <!-- Load Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Load D3 -->
+    <script src="http://d3js.org/d3.v4.min.js"></script>
+    <!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.2/d3.min.js"></script>-->
+
 </head>
 <body>
 
-<!-- Display visualization -->
-<script type="text/javascript" src="js/medical_codes_vis.js"></script>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="margin-bottom: 50px;">
+    <a class="navbar-brand" href="#"> MediCVis - Visualizing Medical Codes</a>
+</nav>
+
+
+
+<div class="container-fluid" style="padding-left: 20px; padding-right: 20px">
+    <div class="row" id="main">
+
+        <div class="col-md-3" id="options">
+            <div class="card" style="height: 100%">
+                <div class="card-header">
+                    <h5>Options</h5>
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="card-text">
+                        Select file with diagnosis codes: <br><br>
+                    </div>
+                    <!-- Select file to use as input -->
+                    <div class="input-group">
+                        <span class="input-group-btn">
+                            <span class="btn btn-primary btn-file">
+                                Browse&hellip; <input type="file" single>
+                            </span>
+                        </span>
+                        <input type="text" class="form-control" readonly>
+                    </div>
+                    <hr>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-7" id="vis" style="padding-left: 20px; height: 850px" >
+            <!-- Display visualization -->
+            <svg width="1000" height="850" preserveAspectRatio="xMinYMin meet"
+                 viewBox="0 0 900 900" class="svg-content-responsive">
+
+            </svg>
+            <script type="text/javascript" src="js/medical_codes_vis_circle_pack.js"></script>
+        </div>
+
+
+    </div>
+</div>
 
 </body>
 </html>
