@@ -39,19 +39,18 @@
 
 
                 <div class="card-body">
-
-                    <div class="card-text">
-                        Select file with diagnosis codes: <br><br>
-                    </div>
-                    <!-- Select file to use as input -->
-                    <div class="input-group">
-                        <span class="input-group-btn">
-                            <span class="btn btn-primary btn-file">
-                                Browse&hellip; <input type="file" single>
-                            </span>
-                        </span>
-                        <input type="text" class="form-control" readonly>
-                    </div>
+				
+					<div class="card-text"> 
+						You Are Here:<br>
+						<div class="card-text" id="code-path"></div>
+					</div>
+					<hr>
+					
+					<form class="form-inline my-2 my-lg-0">
+					  <input class="form-control mr-sm-2" type="search" placeholder="Search Code" aria-label="Search">
+					  <button class="btn btn-primary my-2 my-sm-0" type="submit">Search</button>
+					</form>
+					
                     <hr>
 
                 </div>
@@ -59,10 +58,10 @@
 
         </div>
 
-        <div class="col-md-7" id="vis" style="padding-left: 20px; height: 850px" >
+        <div class="col-md-7" id="vis" style="margin-left: 100px; height: 950px" >
             <!-- Display visualization -->
-            <svg width="1000" height="850" preserveAspectRatio="xMinYMin meet"
-                 viewBox="0 0 900 900" class="svg-content-responsive">
+            <svg width="1000" height="950" preserveAspectRatio="xMinYMin meet"
+                 viewBox="0 0 1000 1000" class="svg-content-responsive">
 
             </svg>
             <script type="text/javascript" src="js/medical_codes_vis_circle_pack.js"></script>

@@ -27,7 +27,7 @@ var tooltip = d3.select("body")
     .style("border-radius", "5px").style("padding", "4px");
 
 
-d3.json("data/icd10_full.json", function (error, root) {
+d3.json("data/example.json", function (error, root) {
     if (error) throw error;
 
     // Get maximal depth of the tree, to determine opacities of nodes.
@@ -114,6 +114,10 @@ d3.json("data/icd10_full.json", function (error, root) {
     });
 
     zoomTo([root.x, root.y, root.r * 2 + margin]);
+	
+	// Update Breadcrumbs
+	var codePathElement = document.getElementById("code-path");
+	codePathElement.innerHTML = "&rarr;" + root.data.name;
 
     function zoom(d) {
         let targetDepth = d.depth;
@@ -169,6 +173,16 @@ d3.json("data/icd10_full.json", function (error, root) {
                     this.style.display = "none";
                 }
             });
+			
+		// Update Breadcrumbs
+		var codePathElement = document.getElementById("code-path");
+		var codePath = "";
+		var currentNode = focus;
+		while (currentNode != null) {
+			codePath = "&rarr;" + currentNode.data.name + codePath;
+			currentNode = currentNode.parent;
+		}
+		codePathElement.innerHTML = codePath;
     }
 
     function zoomTo(v) {
