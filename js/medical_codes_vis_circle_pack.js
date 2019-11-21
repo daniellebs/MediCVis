@@ -71,12 +71,14 @@ d3.json("data/icd10_full.json", function (error, root) {
             if (d.depth === 0) {
                 return color("root");
             }
+            // Color circles by main category
             while (d.depth > 1) {
                 d = d.parent;
             }
             return color(d.data.name);
         })
         .attr("fill-opacity", function (d) {
+            // The deeper the node in the tree, the higher the opacity.
             return (d.depth + 1) / (maxDepth + 5);
         })
         // Initially, only display first two levels of hierarchy
@@ -85,6 +87,7 @@ d3.json("data/icd10_full.json", function (error, root) {
             if (focus !== d) zoom(d);
             d3.event.stopPropagation();
         })
+        // Set tooltip
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
         .on("mouseleave", mouseleave);
@@ -94,6 +97,7 @@ d3.json("data/icd10_full.json", function (error, root) {
         .enter().append("text")
         .attr("class", "circle-label")
         .style("font-size", function (d) {
+            // larger circles get larger fonts
             return (d.r/2.2).toString() + "px";
         })
         .style("fill-opacity", function (d) {
@@ -105,7 +109,6 @@ d3.json("data/icd10_full.json", function (error, root) {
         .text(function (d) {
             return d.data.name;
         });
-
 
     var node = g.selectAll("circle,text");
 
@@ -123,6 +126,7 @@ d3.json("data/icd10_full.json", function (error, root) {
         let targetDepth = d.depth;
         focus = d;
         if (!focus.children) {
+            // We don't zoom on leaves
             return;
         }
 
@@ -163,12 +167,14 @@ d3.json("data/icd10_full.json", function (error, root) {
             })
             .on("start", function (d) {
                 if (d.parent === focus) {
+                    // Set font size according to zoomed in circles
                     let k = diameter / (focus.r * 2 + margin + 40);
                     this.style.fontSize = ((d.r/2.2) * k).toString() + "px";
                     this.style.display = "inline";
                 }
             })
             .on("end", function (d) {
+                // TODO: We should make this work similar to the circles
                 if (d.parent !== focus) {
                     this.style.display = "none";
                 }
@@ -243,7 +249,7 @@ d3.json("data/icd10_full.json", function (error, root) {
         tooltip.style("visibility", "hidden");
     }
 
-    // Get the total sum of a node
+    // Get the total sum of a node TODO: use later, to show further details on categories
     function getTotalSum(obj) {
         if (obj.hasOwnProperty("value")) {
             return obj.value;
@@ -254,32 +260,5 @@ d3.json("data/icd10_full.json", function (error, root) {
             tmpSum += getTotalSum(c);
         }
     }
-
-
-
-    // ==================================== Input ========================================
-
-    $(document).on('change', '.btn-file :file', function() {
-        var input = $(this),
-            numFiles = input.get(0).files ? input.get(0).files.length : 1,
-            label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
-        // TODO: send the full file path to fileSelect, and change all values of the nodes
-        input.trigger('fileselect', [numFiles, label]);
-    });
-
-    $(document).ready( function() {
-        $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
-
-            var input = $(this).parents('.input-group').find(':text'),
-                log = numFiles > 1 ? numFiles + ' files selected' : label;
-
-            if( input.length ) {
-                input.val(log);
-            } else {
-                if( log ) alert(log);
-            }
-        });
-    });
-
 
 });
