@@ -27,7 +27,7 @@ var tooltip = d3.select("body")
     .style("border-radius", "5px").style("padding", "4px");
 
 
-d3.json("data/example.json", function (error, root) {
+d3.json("data/icd10_full.json", function (error, root) {
     if (error) throw error;
 
     // Get maximal depth of the tree, to determine opacities of nodes.

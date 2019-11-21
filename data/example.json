@@ -1,0 +1,163 @@
+{
+  "name": "A1",
+  "description": "top level",
+  "children": [
+    {
+      "name": "B1",
+      "description": "another level desc.",
+      "children": [
+        {
+          "name": "C1",
+          "value": 100
+        },
+        {
+          "name": "C2",
+          "children": [
+            {
+              "name": "D1",
+              "value": 50,
+              "children": [
+                {
+                  "name": "E1",
+                  "value": 50,
+                  "children": [
+                    {
+                      "name": "F1",
+                      "value": 50,
+                      "children": [
+                        {
+                          "name": "G1",
+                          "value": 50,
+                          "children": [
+                            {
+                              "name": "H1",
+                              "value": 50,
+                              "children": [
+                                {
+                                  "name": "I1",
+                                  "value": 50
+                                },
+                                {
+                                  "name": "D2",
+                                  "value": 100
+                                }
+                              ]
+                            },
+                            {
+                              "name": "D2",
+                              "value": 100
+                            }
+                          ]
+                        },
+                        {
+                          "name": "D2",
+                          "value": 100
+                        }
+                      ]
+                    },
+                    {
+                      "name": "D2",
+                      "value": 100
+                    }
+                  ]
+                },
+                {
+                  "name": "D2",
+                  "value": 100
+                }
+              ]
+            },
+            {
+              "name": "C3",
+              "value": 200
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "B2",
+      "children": [
+        {
+          "name": "B21",
+          "value": 100
+        },
+        {
+          "name": "B22",
+          "value": 70
+        },
+        {
+          "name": "B23",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "name": "B3",
+      "value": 120
+    },
+    {
+      "name": "B4",
+      "value": 120
+    },
+    {
+      "name": "B5",
+      "value": 120,
+      "children": [
+        {
+          "name": "G1",
+          "value": 50,
+          "children": [
+            {
+              "name": "H1",
+              "value": 50,
+              "children": [
+                {
+                  "name": "I1",
+                  "value": 50
+                },
+                {
+                  "name": "D2",
+                  "value": 100
+                }
+              ]
+            },
+            {
+              "name": "D2",
+              "value": 100
+            }
+          ]
+        },
+        {
+          "name": "D2",
+          "value": 100
+        }
+      ]
+    },
+    {
+      "name": "B6",
+      "value": 450,
+      "description": "this is the node B6"
+    },
+    {
+      "name": "B7",
+      "value": 120
+    },
+    {
+      "name": "B8",
+      "value": 120
+    },
+    {
+      "name": "B9",
+      "value": 120
+    },
+    {
+      "name": "B10",
+      "value": 120
+    },
+    {
+      "name": "B11",
+      "value": 120
+    }
+  ]
+}

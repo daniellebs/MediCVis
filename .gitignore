@@ -1,8 +1,5 @@
-
-*.json
 *.csv
 preprocessing/notebooks/.ipynb_checkpoints/Preprocess codes-checkpoint.ipynb
-*.json
-data/example.json
-data/example.json
 *.xlsx
+data/ICD10.json
+data/ICD10_fixed.json
