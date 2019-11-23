@@ -226,7 +226,7 @@ d3.json("data/example.json", function (error, root) {
     }
 
     function isChild(potentialChild, node) {
-        if (potentialChild.depth <= node.depth) {
+        if (potentialChild.depth <= node.depth || !node.children) {
             return false;
         }
         var child;
@@ -279,7 +279,10 @@ d3.json("data/example.json", function (error, root) {
         event.preventDefault();
 
         let input = document.getElementById('search-input');
-
+        let searchName = document.getElementById("search-code-name").checked;
+        let searchDesc = document.getElementById("search-code-desc").checked;
+        console.log("search name?" + searchName);
+        console.log("search desc?" + searchDesc);
         let lower_case_input = input.value.toLowerCase();
         if (lower_case_input === "" || lower_case_input === " ") return;
 
@@ -291,9 +294,9 @@ d3.json("data/example.json", function (error, root) {
          */
         var searchResults = new Set();
         function getSearchResults(d) {
-            if ((d.data.hasOwnProperty("description") &&
+            if ((d.data.hasOwnProperty("description") && searchDesc &&
                 d.data.description.toLocaleLowerCase().includes(lower_case_input)) ||
-                d.data.name.toLocaleLowerCase().includes(lower_case_input)) {
+                (searchName && d.data.name.toLocaleLowerCase().includes(lower_case_input))) {
                 searchResults.add(d.data.name);
             }
         }
