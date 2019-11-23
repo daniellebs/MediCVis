@@ -27,7 +27,7 @@ var tooltip = d3.select("body")
     .style("border-radius", "5px").style("padding", "4px");
 
 
-d3.json("data/icd10_full.json", function (error, root) {
+d3.json("data/example.json", function (error, root) {
     if (error) throw error;
 
     // Get maximal depth of the tree, to determine opacities of nodes.
@@ -124,15 +124,8 @@ d3.json("data/icd10_full.json", function (error, root) {
 	var codePathElement = document.getElementById("code-path");
 	codePathElement.innerHTML = "&rarr;" + root.data.name;
 
-    function zoom(d) {
-        let targetDepth = d.depth;
-        focus = d;
-        if (!focus.children) {
-            // We don't zoom on leaves
-            return;
-        }
-
-        var transition = d3.transition()
+	function zoomTransitionToFocus() {
+	    return d3.transition()
             .duration(750)
             .tween("zoom", function (d) {
                 var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
@@ -140,6 +133,17 @@ d3.json("data/icd10_full.json", function (error, root) {
                     zoomTo(i(t));
                 };
             });
+    }
+
+    function zoom(d) {
+        let targetDepth = d.depth;
+        focus = d;
+        if (!focus.children) {
+            // We don't zoom in on leaves
+            return;
+        }
+
+        var transition = zoomTransitionToFocus();
 
         transition.selectAll("circle")
             .filter(function (d) {
@@ -270,55 +274,64 @@ d3.json("data/icd10_full.json", function (error, root) {
 
         // TODO: split search to "code" and "description"
 
+        // TODO: show all categories and sub categories in a list.
+
         event.preventDefault();
 
         let input = document.getElementById('search-input');
 
         let lower_case_input = input.value.toLowerCase();
+        if (lower_case_input === "" || lower_case_input === " ") return;
 
-        var highestNode = root;
-        var lowestDepth = maxDepth;
-        // TODO: FIX! find the highest node that contains the search word,
+        // TODO: find the highest node that contains the search word,
         //  OR - if there are search results in more than one of its children
 
         /**
          * @return {boolean}
          */
-        var nodeMatches = new Set();
-        function doesFitSearchResult(d) {
+        var searchResults = new Set();
+        function getSearchResults(d) {
             if ((d.data.hasOwnProperty("description") &&
                 d.data.description.toLocaleLowerCase().includes(lower_case_input)) ||
                 d.data.name.toLocaleLowerCase().includes(lower_case_input)) {
-                if (d.depth < lowestDepth) {
-                    lowestDepth = d.depth;
-                    highestNode = d;
-                }
-                nodeMatches.add(d.data.name);
-                return true;
-            } else {
-                return false;
+                searchResults.add(d.data.name);
             }
         }
 
-        circle.each(function (d) {
-            let fitSearch = doesFitSearchResult(d);
-            this.style.display = fitSearch || d.depth === 0 ? "inline" : "none";
-        });
+        // TODO: find a nicer way
+        circle.each(d => getSearchResults(d));
 
-        // TODO: Currently only displays text for leaves, consider changing this.
+        function doesItOrDescendentFitSearchResult(d) {
+            if (searchResults.has(d.data.name)) return true;
+            if (!d.children) return searchResults.has(d.data.name);
+            var child;
+            for (child of d.children) {
+                if (searchResults.has(child.data.name) || doesItOrDescendentFitSearchResult(child)) return true;
+            }
+            return false;
+        }
+
+        circle.style("display", d => doesItOrDescendentFitSearchResult(d)  || d.depth === 0 ? "inline" : "none");
+
+        // TODO: Currently only displays text for all results (including parent nodes), consider changing this.
         text.each(function (d) {
-            let fitSearch = doesFitSearchResult(d);
-            if (fitSearch && !d.children) {
+            if (searchResults.has(d.data.name)) {
                 this.style.display = "inline";
                 this.style.fillOpacity = 1;
+                this.style.fontSize = (d.r/2.2).toString() + "px";
             } else {
                 this.style.display = "none";
                 this.style.fillOpacity = 0;
             }
         });
 
-        zoomTo([root.x, root.y, root.r * 2 + margin]);
+        // Zoom out
         focus = root;
+        zoomTransitionToFocus();
+
+        // Update Breadcrumbs
+        var codePathElement = document.getElementById("code-path");
+        codePathElement.innerHTML = "&rarr;" + root.data.name;
 
 
     })
