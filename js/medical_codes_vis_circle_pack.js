@@ -61,22 +61,24 @@ d3.json("data/icd10_full.json", function (error, root) {
         nodes = pack(root).descendants(),
         view;
 
+    function getColorByCategory(d) {
+        if (d.depth === 0) {
+            return color("root");
+        }
+        // Color circles by main category
+        while (d.depth > 1) {
+            d = d.parent;
+        }
+        return color(d.data.name);
+    }
+
     var circle = g.selectAll("circle")
         .data(nodes)
         .enter().append("circle")
         .attr("class", function (d) {
             return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root";
         })
-        .style("fill", function (d) {
-            if (d.depth === 0) {
-                return color("root");
-            }
-            // Color circles by main category
-            while (d.depth > 1) {
-                d = d.parent;
-            }
-            return color(d.data.name);
-        })
+        .style("fill", getColorByCategory)
         .attr("fill-opacity", function (d) {
             // The deeper the node in the tree, the higher the opacity.
             return (d.depth + 1) / (maxDepth + 5);
@@ -131,7 +133,7 @@ d3.json("data/icd10_full.json", function (error, root) {
         }
 
         var transition = d3.transition()
-            .duration(d3.event.altKey ? 7500 : 750)
+            .duration(750)
             .tween("zoom", function (d) {
                 var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
                 return function (t) {
@@ -260,5 +262,65 @@ d3.json("data/icd10_full.json", function (error, root) {
             tmpSum += getTotalSum(c);
         }
     }
+
+    // ================================================ Search =========================================================
+
+    document.getElementById("searchbox").addEventListener("submit", function(event) {
+        // TODO: show the search query in a designated text box
+
+        // TODO: split search to "code" and "description"
+
+        event.preventDefault();
+
+        let input = document.getElementById('search-input');
+
+        let lower_case_input = input.value.toLowerCase();
+
+        var highestNode = root;
+        var lowestDepth = maxDepth;
+        // TODO: FIX! find the highest node that contains the search word,
+        //  OR - if there are search results in more than one of its children
+
+        /**
+         * @return {boolean}
+         */
+        var nodeMatches = new Set();
+        function doesFitSearchResult(d) {
+            if ((d.data.hasOwnProperty("description") &&
+                d.data.description.toLocaleLowerCase().includes(lower_case_input)) ||
+                d.data.name.toLocaleLowerCase().includes(lower_case_input)) {
+                if (d.depth < lowestDepth) {
+                    lowestDepth = d.depth;
+                    highestNode = d;
+                }
+                nodeMatches.add(d.data.name);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        circle.each(function (d) {
+            let fitSearch = doesFitSearchResult(d);
+            this.style.display = fitSearch || d.depth === 0 ? "inline" : "none";
+        });
+
+        // TODO: Currently only displays text for leaves, consider changing this.
+        text.each(function (d) {
+            let fitSearch = doesFitSearchResult(d);
+            if (fitSearch && !d.children) {
+                this.style.display = "inline";
+                this.style.fillOpacity = 1;
+            } else {
+                this.style.display = "none";
+                this.style.fillOpacity = 0;
+            }
+        });
+
+        zoomTo([root.x, root.y, root.r * 2 + margin]);
+        focus = root;
+
+
+    })
 
 });
