@@ -8,12 +8,27 @@ document.getElementById('codesfile').onchange = function(){
         console.log('Reading codes list from file ' + file.name);
 
         codesInput = new Set(this.result.split('\n'));
+
+        var codesListContainer = document.getElementById("codes-from-input");
+        for (c of codesInput) {
+            var checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = c + "-checkbox";
+            checkbox.checked = true;
+            var label = document.createElement("label");
+            label.htmlFor =  checkbox.id;
+            label.appendChild(document.createTextNode(c));
+            codesListContainer.appendChild(checkbox);
+            codesListContainer.appendChild(label);
+            codesListContainer.appendChild(document.createElement("br"))
+        }
     };
     reader.readAsText(file);
     document.getElementById("codesfile-label").innerText = file.name;
 
     document.getElementById("allcodes").style.display = "inline";
     document.getElementById("listcodes").style.display = "inline";
+
 
     // TODO: set a list of codes checkboxes
 };
@@ -395,7 +410,7 @@ d3.json("data/example.json", function (error, root) {
         });
 
         text.each(function (d) {
-            isFirstLayer = d.parent === root;
+            let isFirstLayer = d.parent === root;
             this.style.fillOpacity =  isFirstLayer ? 1 : 0;
             this.style.display = isFirstLayer ? "inline" : "none";
         });
@@ -425,7 +440,6 @@ d3.json("data/example.json", function (error, root) {
         setTextForCodesInSet(codesInput);
 
         resetView();
-
     }
 
     document.getElementById("listcodes").addEventListener("click", showListCodes);
