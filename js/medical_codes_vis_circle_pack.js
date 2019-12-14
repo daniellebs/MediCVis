@@ -65,6 +65,8 @@ d3.json("data/example.json", function (error, root) {
     maxDepth = getDepth(root);
     console.log("Hierarchy maximal depth is " + maxDepth);
 
+    var codesFromList = false;
+
     let color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, root.children.length + 2));
 
     root = d3.hierarchy(root)
@@ -171,91 +173,6 @@ d3.json("data/example.json", function (error, root) {
         }
     }
 
-    // ================================================= Zoom ==========================================================
-    function zoomTransitionToFocus() {
-        return d3.transition()
-            .duration(750)
-            .tween("zoom", function (d) {
-                var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
-                return function (t) {
-                    zoomTo(i(t));
-                };
-            });
-    }
-
-    function zoom(d) {
-        let targetDepth = d.depth;
-        focus = d;
-        if (!focus.children) {
-            // We don't zoom in on leaves
-            return;
-        }
-
-        var transition = zoomTransitionToFocus();
-
-        transition.selectAll("circle")
-            .filter(function (d) {
-                return d.depth < targetDepth + 2 || this.style.display === "inline";
-            })
-            .style("fill-opacity", function (d) {
-                return d.depth < targetDepth + 2 ? (d.depth + 1) / (maxDepth + 5) : 0;
-            })
-            .on("start", function (d) {
-                // Only display the ancestors and children of focus (and the focus node).
-                if (isAncestor(d, focus) || isChild(d, focus) || d === focus) {
-                    this.style.display = "inline";
-                }
-            }).on("end", function (d) {
-            // Hide non-ancestors and non-children
-            if (!isAncestor(d, focus) && !isChild(d, focus) && d !== focus) {
-                this.style.display = "none";
-            }
-        });
-
-        transition.selectAll("text")
-            .filter(function (d) {
-                return d.parent === focus || this.style.display === "inline";
-            })
-            .style("fill-opacity", function (d) {
-                return d.parent === focus ? 1 : 0;
-            })
-            .on("start", function (d) {
-                if (d.parent === focus) {
-                    // Set font size according to zoomed in circles
-                    let k = diameter / (focus.r * 2 + margin + 40);
-                    this.style.fontSize = ((d.r/2.2) * k).toString() + "px";
-                    this.style.display = "inline";
-                }
-            })
-            .on("end", function (d) {
-                // TODO: We should make this work similar to the circles
-                if (d.parent !== focus) {
-                    this.style.display = "none";
-                }
-            });
-
-        // Update Breadcrumbs
-        var codePathElement = document.getElementById("code-path");
-        var codePath = "";
-        var currentNode = focus;
-        while (currentNode != null) {
-            codePath = "&rarr;" + currentNode.data.name + codePath;
-            currentNode = currentNode.parent;
-        }
-        codePathElement.innerHTML = codePath;
-    }
-
-    function zoomTo(v) {
-        var k = diameter / v[2];
-        view = v;
-        node.attr("transform", function (d) {
-            return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
-        });
-        circle.attr("r", function (d) {
-            return d.r * k;
-        });
-    }
-
     // ================================================ Utils ==========================================================
     function resetView() {
         // Zoom out
@@ -320,6 +237,104 @@ d3.json("data/example.json", function (error, root) {
         });
     }
 
+
+    // ================================================= Zoom ==========================================================
+    function zoomTransitionToFocus() {
+        return d3.transition()
+            .duration(750)
+            .tween("zoom", function (d) {
+                var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
+                return function (t) {
+                    zoomTo(i(t));
+                };
+            });
+    }
+
+    function zoom(d) {
+        let targetDepth = d.depth;
+        focus = d;
+        if (!focus.children) {
+            // We don't zoom in on leaves
+            return;
+        }
+
+        var transition = zoomTransitionToFocus();
+
+        transition.selectAll("circle")
+            .filter(function (d) {
+                return d.depth < targetDepth + 2 || this.style.display === "inline";
+            })
+            .style("fill-opacity", function (d) {
+                return d.depth < targetDepth + 2 ? (d.depth + 1) / (maxDepth + 5) : 0;
+            })
+            .on("start", function (d) {
+                // Only display the ancestors and children of focus (and the focus node).
+                if (isAncestor(d, focus) || isChild(d, focus) || d === focus) {
+                    // If we are only viewing codes from input file, make sure we don't display others.
+                    if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) return;
+                    this.style.display = "inline";
+                }
+            })
+            .on("end", function (d) {
+            // Hide non-ancestors and non-children
+            if (!isAncestor(d, focus) && !isChild(d, focus) && d !== focus) {
+                this.style.display = "none";
+            }
+            // If we are only viewing codes from input file, make sure we don't display others.
+            if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) {
+                this.style.display = "none";
+            }
+        });
+
+        transition.selectAll("text")
+            .filter(function (d) {
+                return d.parent === focus || this.style.display === "inline";
+            })
+            .style("fill-opacity", function (d) {
+                return d.parent === focus ? 1 : 0;
+            })
+            .on("start", function (d) {
+                if (d.parent === focus) {
+                    // Set font size according to zoomed in circles
+                    let k = diameter / (focus.r * 2 + margin + 40);
+                    this.style.fontSize = ((d.r/2.2) * k).toString() + "px";
+                    if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) return;
+                    this.style.display = "inline";
+                }
+            })
+            .on("end", function (d) {
+                // Hide non-ancestors and non-children
+                if (!isAncestor(d, focus) && !isChild(d, focus) && d !== focus) {
+                    this.style.display = "none";
+                }
+                // If we are only viewing codes from input file, make sure we don't display others.
+                if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) {
+                    this.style.display = "none";
+                }
+            });
+
+        // Update Breadcrumbs
+        var codePathElement = document.getElementById("code-path");
+        var codePath = "";
+        var currentNode = focus;
+        while (currentNode != null) {
+            codePath = "&rarr;" + currentNode.data.name + codePath;
+            currentNode = currentNode.parent;
+        }
+        codePathElement.innerHTML = codePath;
+    }
+
+    function zoomTo(v) {
+        var k = diameter / v[2];
+        view = v;
+        node.attr("transform", function (d) {
+            return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
+        });
+        circle.attr("r", function (d) {
+            return d.r * k;
+        });
+    }
+
     // ================================================ Search =========================================================
 
 
@@ -327,6 +342,7 @@ d3.json("data/example.json", function (error, root) {
         // TODO: show the search query in a designated text box
 
         // TODO: show all categories and sub categories in a list.
+        codesFromList = false;
 
         event.preventDefault();
 
@@ -367,6 +383,7 @@ d3.json("data/example.json", function (error, root) {
 
     // =============================================== Code List =======================================================
     function showAllCodes() {
+        codesFromList = false;
         console.log("Showing all codes.");
         document.getElementById("allcodes").disabled = true;
         document.getElementById("listcodes").disabled = false;
@@ -384,10 +401,10 @@ d3.json("data/example.json", function (error, root) {
         });
 
         resetView();
-
     }
 
     function showListCodes() {
+        codesFromList = true;
         console.log("Showing codes from input file.");
         document.getElementById("listcodes").disabled = true;
         document.getElementById("allcodes").disabled = false;
