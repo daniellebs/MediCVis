@@ -1,5 +1,5 @@
 
-var codesInput = null;
+var codesInput = new Set();
 document.getElementById('codesfile').onchange = function(){
     var file = this.files[0];
 
@@ -7,7 +7,11 @@ document.getElementById('codesfile').onchange = function(){
     reader.onload = function(progressEvent){
         console.log('Reading codes list from file ' + file.name);
 
-        codesInput = new Set(this.result.split('\n'));
+        let codes = new Set(this.result.split('\n'));
+        for (c of codes) {
+            c = c.replace(/\s+/g, '');
+            codesInput.add(c);
+        }
 
         var codesListContainer = document.getElementById("codes-from-input");
         for (c of codesInput) {
@@ -161,15 +165,15 @@ d3.json("data/example.json", function (error, root) {
 
     // Three function that change the tooltip when user hover / move / leave a cell
     function mouseover(d) {
+        var desc = "";
         if (d.data.hasOwnProperty("description")) {
-            tooltip.text((d.data.name + ": " + d.data.description)).style("visibility", "visible");
+            desc = ": " + d.data.description;
         }
+        tooltip.text((d.data.name + desc)).style("visibility", "visible");
     }
 
     function mousemove(d) {
-        if (d.data.hasOwnProperty("description")) {
-            tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
-        }
+        tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
     }
 
     function mouseleave(d) {
@@ -252,6 +256,15 @@ d3.json("data/example.json", function (error, root) {
         });
     }
 
+    function getCheckedCodes(checkedCodes) {
+        checkedCodes = new Set();
+        for (c of document.getElementById("codes-from-input").children) {
+            if (c.tagName === "INPUT" && c.checked) {
+                checkedCodes.add(c.id.split("-")[0]);
+            }
+        }
+        return checkedCodes;
+    }
 
     // ================================================= Zoom ==========================================================
     function zoomTransitionToFocus() {
@@ -352,7 +365,6 @@ d3.json("data/example.json", function (error, root) {
 
     // ================================================ Search =========================================================
 
-
     document.getElementById("searchbox").addEventListener("submit", function(event) {
         // TODO: show the search query in a designated text box
 
@@ -421,23 +433,25 @@ d3.json("data/example.json", function (error, root) {
     function showListCodes() {
         codesFromList = true;
         console.log("Showing codes from input file.");
-        document.getElementById("listcodes").disabled = true;
         document.getElementById("allcodes").disabled = false;
 
-        console.log(codesInput);  // TODO: remove
+        var checkedCodes = getCheckedCodes();
+        console.log(checkedCodes);
 
         // Display circles for codes from list
         circle.each(function (d) {
-            if (isCodeOrItsDescendentInSet(d, codesInput)) {
+            if (isCodeOrItsDescendentInSet(d, checkedCodes)) {
+                let checkbox = document.getElementById(d.data.name + "-checkbox");
+                console.log("Displaying code " + d.data.name);
                 this.style.display = "inline";
-                this.style.fill = codesInput.has(d.data.name) ? "#DD5A43" : "#94A5BC";
+                this.style.fill = (checkbox != null && checkbox.checked) ? "#DD5A43" : "#94A5BC";
             } else {
                 this.style.display = "none";
             }
         });
 
         // Display text for codes from list
-        setTextForCodesInSet(codesInput);
+        setTextForCodesInSet(checkedCodes);
 
         resetView();
     }
