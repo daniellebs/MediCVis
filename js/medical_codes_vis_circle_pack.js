@@ -14,6 +14,7 @@ document.getElementById('codesfile').onchange = function(){
         }
 
         var codesListContainer = document.getElementById("codes-from-input");
+        // TODO: Set checkboxes according to their code hierarchy.
         for (c of codesInput) {
             var checkbox = document.createElement("input");
             checkbox.type = "checkbox";
@@ -411,9 +412,7 @@ d3.json("data/example.json", function (error, root) {
     // =============================================== Code List =======================================================
     function showAllCodes() {
         codesFromList = false;
-        console.log("Showing all codes.");
-        document.getElementById("allcodes").disabled = true;
-        document.getElementById("listcodes").disabled = false;
+        console.log("Resetting view.");
 
         circle.each(function (d) {
             this.style.fill = getColorByCategory(d);
