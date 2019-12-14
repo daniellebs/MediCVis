@@ -1,4 +1,20 @@
 
+var codesList = [];
+document.getElementById('codesfile').onchange = function(){
+    var file = this.files[0];
+
+    var reader = new FileReader();
+    reader.onload = function(progressEvent){
+        console.log('Reading codes list from file ' + file.name);
+
+        codesList = this.result.split('\n');
+    };
+    reader.readAsText(file);
+    document.getElementById("codesfile-label").innerText = file.name;
+
+    document.getElementById("allcodes").style.display = "inline";
+    document.getElementById("listcodes").style.display = "inline";
+};
 
 // ==================================== D3 ========================================
 
@@ -337,6 +353,24 @@ d3.json("data/example.json", function (error, root) {
         codePathElement.innerHTML = "&rarr;" + root.data.name;
 
 
-    })
+    });
+
+    // =============================================== Code List =======================================================
+    function showAllCodes() {
+        console.log("Clicked on all-codes btn");
+        document.getElementById("allcodes").disabled = true;
+        document.getElementById("listcodes").disabled = false;
+
+    }
+
+    function showListCodes() {
+        console.log("Clicked on list-codes btn");
+        document.getElementById("listcodes").disabled = true;
+        document.getElementById("allcodes").disabled = false;
+    }
+
+    document.getElementById("listcodes").addEventListener("click", showListCodes);
+    document.getElementById("allcodes").addEventListener("click", showAllCodes);
+
 
 });

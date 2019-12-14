@@ -3,3 +3,4 @@ preprocessing/notebooks/.ipynb_checkpoints/Preprocess codes-checkpoint.ipynb
 *.xlsx
 data/ICD10.json
 data/ICD10_fixed.json
+data/diagnoses.txt
