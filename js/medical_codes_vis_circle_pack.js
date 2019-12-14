@@ -1,5 +1,5 @@
 
-var codesList = [];
+var codesInput = null;
 document.getElementById('codesfile').onchange = function(){
     var file = this.files[0];
 
@@ -7,13 +7,15 @@ document.getElementById('codesfile').onchange = function(){
     reader.onload = function(progressEvent){
         console.log('Reading codes list from file ' + file.name);
 
-        codesList = this.result.split('\n');
+        codesInput = new Set(this.result.split('\n'));
     };
     reader.readAsText(file);
     document.getElementById("codesfile-label").innerText = file.name;
 
     document.getElementById("allcodes").style.display = "inline";
     document.getElementById("listcodes").style.display = "inline";
+
+    // TODO: set a list of codes checkboxes
 };
 
 // ==================================== D3 ========================================
@@ -140,8 +142,38 @@ d3.json("data/example.json", function (error, root) {
 	var codePathElement = document.getElementById("code-path");
 	codePathElement.innerHTML = "&rarr;" + root.data.name;
 
-	function zoomTransitionToFocus() {
-	    return d3.transition()
+    // Three function that change the tooltip when user hover / move / leave a cell
+    function mouseover(d) {
+        if (d.data.hasOwnProperty("description")) {
+            tooltip.text((d.data.name + ": " + d.data.description)).style("visibility", "visible");
+        }
+    }
+
+    function mousemove(d) {
+        if (d.data.hasOwnProperty("description")) {
+            tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
+        }
+    }
+
+    function mouseleave(d) {
+        tooltip.style("visibility", "hidden");
+    }
+
+    // Get the total sum of a node TODO: use later, to show further details on categories
+    function getTotalSum(obj) {
+        if (obj.hasOwnProperty("value")) {
+            return obj.value;
+        }
+        var tmpSum = 0;
+        var c;
+        for (c of obj.children) {
+            tmpSum += getTotalSum(c);
+        }
+    }
+
+    // ================================================= Zoom ==========================================================
+    function zoomTransitionToFocus() {
+        return d3.transition()
             .duration(750)
             .tween("zoom", function (d) {
                 var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
@@ -201,16 +233,16 @@ d3.json("data/example.json", function (error, root) {
                     this.style.display = "none";
                 }
             });
-			
-		// Update Breadcrumbs
-		var codePathElement = document.getElementById("code-path");
-		var codePath = "";
-		var currentNode = focus;
-		while (currentNode != null) {
-			codePath = "&rarr;" + currentNode.data.name + codePath;
-			currentNode = currentNode.parent;
-		}
-		codePathElement.innerHTML = codePath;
+
+        // Update Breadcrumbs
+        var codePathElement = document.getElementById("code-path");
+        var codePath = "";
+        var currentNode = focus;
+        while (currentNode != null) {
+            codePath = "&rarr;" + currentNode.data.name + codePath;
+            currentNode = currentNode.parent;
+        }
+        codePathElement.innerHTML = codePath;
     }
 
     function zoomTo(v) {
@@ -222,6 +254,27 @@ d3.json("data/example.json", function (error, root) {
         circle.attr("r", function (d) {
             return d.r * k;
         });
+    }
+
+    // ================================================ Utils ==========================================================
+    function resetView() {
+        // Zoom out
+        focus = root;
+        zoomTransitionToFocus();
+
+        // Update Breadcrumbs
+        var codePathElement = document.getElementById("code-path");
+        codePathElement.innerHTML = "&rarr;" + root.data.name;
+    }
+
+    function isCodeOrItsDescendentInSet(d, codesSet) {
+        if (codesSet.has(d.data.name)) return true;
+        if (!d.children) return codesSet.has(d.data.name);
+        var child;
+        for (child of d.children) {
+            if (codesSet.has(child.data.name) || isCodeOrItsDescendentInSet(child, codesSet)) return true;
+        }
+        return false;
     }
 
     function isAncestor(potentialParent, node) {
@@ -254,41 +307,24 @@ d3.json("data/example.json", function (error, root) {
         return false;
     }
 
-    // Three function that change the tooltip when user hover / move / leave a cell
-    function mouseover(d) {
-        if (d.data.hasOwnProperty("description")) {
-            tooltip.text((d.data.name + ": " + d.data.description)).style("visibility", "visible");
-        }
-    }
-
-    function mousemove(d) {
-        if (d.data.hasOwnProperty("description")) {
-            tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
-        }
-    }
-
-    function mouseleave(d) {
-        tooltip.style("visibility", "hidden");
-    }
-
-    // Get the total sum of a node TODO: use later, to show further details on categories
-    function getTotalSum(obj) {
-        if (obj.hasOwnProperty("value")) {
-            return obj.value;
-        }
-        var tmpSum = 0;
-        var c;
-        for (c of obj.children) {
-            tmpSum += getTotalSum(c);
-        }
+    function setTextForCodesInSet(codesSet) {
+        text.each(function (d) {
+            if (codesSet.has(d.data.name)) {
+                this.style.display = "inline";
+                this.style.fillOpacity = 1;
+                this.style.fontSize = (d.r / 2.2).toString() + "px";
+            } else {
+                this.style.display = "none";
+                this.style.fillOpacity = 0;
+            }
+        });
     }
 
     // ================================================ Search =========================================================
 
+
     document.getElementById("searchbox").addEventListener("submit", function(event) {
         // TODO: show the search query in a designated text box
-
-        // TODO: split search to "code" and "description"
 
         // TODO: show all categories and sub categories in a list.
 
@@ -320,39 +356,13 @@ d3.json("data/example.json", function (error, root) {
         // TODO: find a nicer way
         circle.each(d => getSearchResults(d));
 
-        function doesItOrDescendentFitSearchResult(d) {
-            if (searchResults.has(d.data.name)) return true;
-            if (!d.children) return searchResults.has(d.data.name);
-            var child;
-            for (child of d.children) {
-                if (searchResults.has(child.data.name) || doesItOrDescendentFitSearchResult(child)) return true;
-            }
-            return false;
-        }
-
-        circle.style("display", d => doesItOrDescendentFitSearchResult(d)  || d.depth === 0 ? "inline" : "none");
+        circle.style("display",
+                d => isCodeOrItsDescendentInSet(d, searchResults)  || d.depth === 0 ? "inline" : "none");
 
         // TODO: Currently only displays text for all results (including parent nodes), consider changing this.
-        text.each(function (d) {
-            if (searchResults.has(d.data.name)) {
-                this.style.display = "inline";
-                this.style.fillOpacity = 1;
-                this.style.fontSize = (d.r/2.2).toString() + "px";
-            } else {
-                this.style.display = "none";
-                this.style.fillOpacity = 0;
-            }
-        });
+        setTextForCodesInSet(searchResults);
 
-        // Zoom out
-        focus = root;
-        zoomTransitionToFocus();
-
-        // Update Breadcrumbs
-        var codePathElement = document.getElementById("code-path");
-        codePathElement.innerHTML = "&rarr;" + root.data.name;
-
-
+        resetView();
     });
 
     // =============================================== Code List =======================================================
@@ -361,6 +371,20 @@ d3.json("data/example.json", function (error, root) {
         document.getElementById("allcodes").disabled = true;
         document.getElementById("listcodes").disabled = false;
 
+        circle.each(function (d) {
+            this.style.fill = getColorByCategory(d);
+            // Only display first two levels of hierarchy
+            this.style.display = d.depth < 2 ? "inline" : "none";
+        });
+
+        text.each(function (d) {
+            isFirstLayer = d.parent === root;
+            this.style.fillOpacity =  isFirstLayer ? 1 : 0;
+            this.style.display = isFirstLayer ? "inline" : "none";
+        });
+
+        resetView();
+
     }
 
     function showListCodes() {
@@ -368,7 +392,23 @@ d3.json("data/example.json", function (error, root) {
         document.getElementById("listcodes").disabled = true;
         document.getElementById("allcodes").disabled = false;
 
-        console.log(codesList);  // TODO: remove
+        console.log(codesInput);  // TODO: remove
+
+        // Display circles for codes from list
+        circle.each(function (d) {
+            if (isCodeOrItsDescendentInSet(d, codesInput)) {
+                this.style.display = "inline";
+                this.style.fill = codesInput.has(d.data.name) ? "#DD5A43" : "#94A5BC";
+            } else {
+                this.style.display = "none";
+            }
+        });
+
+        // Display text for codes from list
+        setTextForCodesInSet(codesInput);
+
+        resetView();
+
     }
 
     document.getElementById("listcodes").addEventListener("click", showListCodes);
