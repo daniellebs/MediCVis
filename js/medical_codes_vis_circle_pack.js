@@ -61,7 +61,7 @@ d3.json("data/example.json", function (error, root) {
     }
 
     maxDepth = getDepth(root);
-    console.log("max depth: " + maxDepth);
+    console.log("Hierarchy maximal depth is " + maxDepth);
 
     let color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, root.children.length + 2));
 
@@ -297,8 +297,8 @@ d3.json("data/example.json", function (error, root) {
         let input = document.getElementById('search-input');
         let searchName = document.getElementById("search-code-name").checked;
         let searchDesc = document.getElementById("search-code-desc").checked;
-        console.log("search name?" + searchName);
-        console.log("search desc?" + searchDesc);
+        console.log("Searching for " + input.value + " in:" + (searchName ? " (code name)" : "") + (
+            searchDesc ? " (code description)" : ""));
         let lower_case_input = input.value.toLowerCase();
         if (lower_case_input === "" || lower_case_input === " ") return;
 
@@ -357,16 +357,18 @@ d3.json("data/example.json", function (error, root) {
 
     // =============================================== Code List =======================================================
     function showAllCodes() {
-        console.log("Clicked on all-codes btn");
+        console.log("Showing all codes.");
         document.getElementById("allcodes").disabled = true;
         document.getElementById("listcodes").disabled = false;
 
     }
 
     function showListCodes() {
-        console.log("Clicked on list-codes btn");
+        console.log("Showing codes from input file.");
         document.getElementById("listcodes").disabled = true;
         document.getElementById("allcodes").disabled = false;
+
+        console.log(codesList);  // TODO: remove
     }
 
     document.getElementById("listcodes").addEventListener("click", showListCodes);
