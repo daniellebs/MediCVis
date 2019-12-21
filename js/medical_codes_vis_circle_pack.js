@@ -162,7 +162,7 @@ d3.json("data/example.json", function (error, root) {
 	
 	// Update Breadcrumbs
 	var codePathElement = document.getElementById("code-path");
-	codePathElement.innerHTML = "&rarr;" + root.data.name;
+	codePathElement.innerHTML = "<b>You Are Here: </b> &rarr;" + root.data.name;
 
     // Three function that change the tooltip when user hover / move / leave a cell
     function mouseover(d) {
@@ -201,7 +201,7 @@ d3.json("data/example.json", function (error, root) {
 
         // Update Breadcrumbs
         var codePathElement = document.getElementById("code-path");
-        codePathElement.innerHTML = "&rarr;" + root.data.name;
+        codePathElement.innerHTML = "<b>You Are Here: </b> &rarr;" + root.data.name;
     }
 
     function isCodeOrItsDescendentInSet(d, codesSet) {
@@ -350,7 +350,7 @@ d3.json("data/example.json", function (error, root) {
             codePath = "&rarr;" + currentNode.data.name + codePath;
             currentNode = currentNode.parent;
         }
-        codePathElement.innerHTML = codePath;
+        codePathElement.innerHTML = "<b>You Are Here: </b>" + codePath;
     }
 
     function zoomTo(v) {
