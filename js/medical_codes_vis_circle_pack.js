@@ -297,22 +297,23 @@ d3.json("data/example.json", function (error, root) {
                 return d.depth < targetDepth + 2 ? (d.depth + 1) / (maxDepth + 5) : 0;
             })
             .on("start", function (d) {
+                // Hide non-ancestors and non-children
+                if (!isAncestor(d, focus) && !isChild(d, focus) && d !== focus) {
+                    this.style.display = "none";
+                }
+                // If we are only viewing codes from input file, make sure we don't display others.
+                if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) {
+                    this.style.display = "none";
+                }
+            })
+            .on("end", function (d) {
+                // TODO: make this animated with duration
                 // Only display the ancestors and children of focus (and the focus node).
                 if (isAncestor(d, focus) || isChild(d, focus) || d === focus) {
                     // If we are only viewing codes from input file, make sure we don't display others.
                     if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) return;
                     this.style.display = "inline";
                 }
-            })
-            .on("end", function (d) {
-            // Hide non-ancestors and non-children
-            if (!isAncestor(d, focus) && !isChild(d, focus) && d !== focus) {
-                this.style.display = "none";
-            }
-            // If we are only viewing codes from input file, make sure we don't display others.
-            if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) {
-                this.style.display = "none";
-            }
         });
 
         transition.selectAll("text")
@@ -323,15 +324,6 @@ d3.json("data/example.json", function (error, root) {
                 return d.parent === focus ? 1 : 0;
             })
             .on("start", function (d) {
-                if (d.parent === focus) {
-                    // Set font size according to zoomed in circles
-                    let k = diameter / (focus.r * 2 + margin + 40);
-                    this.style.fontSize = ((d.r/2.2) * k).toString() + "px";
-                    if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) return;
-                    this.style.display = "inline";
-                }
-            })
-            .on("end", function (d) {
                 // Hide non-ancestors and non-children
                 if (!isAncestor(d, focus) && !isChild(d, focus) && d !== focus) {
                     this.style.display = "none";
@@ -339,6 +331,16 @@ d3.json("data/example.json", function (error, root) {
                 // If we are only viewing codes from input file, make sure we don't display others.
                 if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) {
                     this.style.display = "none";
+                }
+            })
+            .on("end", function (d) {
+                // TODO: make this animated with duration
+                if (d.parent === focus) {
+                    // Set font size according to zoomed in circles
+                    let k = diameter / (focus.r * 2 + margin + 40);
+                    this.style.fontSize = ((d.r/2.2) * k).toString() + "px";
+                    if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) return;
+                    this.style.display = "inline";
                 }
             });
 
