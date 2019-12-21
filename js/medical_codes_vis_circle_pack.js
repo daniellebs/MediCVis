@@ -380,7 +380,10 @@ d3.json("data/example.json", function (error, root) {
         console.log("Searching for " + input.value + " in:" + (searchName ? " (code name)" : "") + (
             searchDesc ? " (code description)" : ""));
         let lower_case_input = input.value.toLowerCase();
-        if (lower_case_input === "" || lower_case_input === " ") return;
+        if (lower_case_input === "" || lower_case_input === " ") {
+            showAllCodes();
+            return;
+        }
 
         // TODO: find the highest node that contains the search word,
         //  OR - if there are search results in more than one of its children
@@ -403,7 +406,8 @@ d3.json("data/example.json", function (error, root) {
         circle.style("display",
                 d => isCodeOrItsDescendentInSet(d, searchResults)  || d.depth === 0 ? "inline" : "none");
 
-        // TODO: Currently only displays text for all results (including parent nodes), consider changing this.
+        // TODO: Currently only displays text for all results (including parent nodes),
+        //  consider changing this so only displays text of top layer.
         setTextForCodesInSet(searchResults);
 
         resetView();
@@ -416,8 +420,7 @@ d3.json("data/example.json", function (error, root) {
 
         circle.each(function (d) {
             this.style.fill = getColorByCategory(d);
-            // Only display first two levels of hierarchy
-            this.style.display = d.depth < 2 ? "inline" : "none";
+            this.style.display = "inline";
         });
 
         text.each(function (d) {
