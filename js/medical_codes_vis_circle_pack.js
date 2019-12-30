@@ -1,42 +1,42 @@
 
 var codesInput = new Set();
-document.getElementById('codesfile').onchange = function(){
-    var file = this.files[0];
-
-    var reader = new FileReader();
-    reader.onload = function(progressEvent){
-        console.log('Reading codes list from file ' + file.name);
-
-        let codes = new Set(this.result.split('\n'));
-        for (c of codes) {
-            c = c.replace(/\s+/g, '');
-            codesInput.add(c);
-        }
-
-        var codesListContainer = document.getElementById("codes-from-input");
-        // TODO: Set checkboxes according to their code hierarchy.
-        for (c of codesInput) {
-            var checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.id = c + "-checkbox";
-            checkbox.checked = true;
-            var label = document.createElement("label");
-            label.htmlFor =  checkbox.id;
-            label.appendChild(document.createTextNode(c));
-            codesListContainer.appendChild(checkbox);
-            codesListContainer.appendChild(label);
-            codesListContainer.appendChild(document.createElement("br"))
-        }
-    };
-    reader.readAsText(file);
-    document.getElementById("codesfile-label").innerText = file.name;
-
-    document.getElementById("allcodes").style.display = "inline";
-    document.getElementById("listcodes").style.display = "inline";
+// document.getElementById('codesfile').onchange = function(){
+//     var file = this.files[0];
+//
+//     var reader = new FileReader();
+//     reader.onload = function(progressEvent){
+//         console.log('Reading codes list from file ' + file.name);
+//
+//         let codes = new Set(this.result.split('\n'));
+//         for (c of codes) {
+//             c = c.replace(/\s+/g, '');
+//             codesInput.add(c);
+//         }
+//
+//         var codesListContainer = document.getElementById("codes-from-input");
+//         // TODO: Set checkboxes according to their code hierarchy.
+//         for (c of codesInput) {
+//             var checkbox = document.createElement("input");
+//             checkbox.type = "checkbox";
+//             checkbox.id = c + "-checkbox";
+//             checkbox.checked = true;
+//             var label = document.createElement("label");
+//             label.htmlFor =  checkbox.id;
+//             label.appendChild(document.createTextNode(c));
+//             codesListContainer.appendChild(checkbox);
+//             codesListContainer.appendChild(label);
+//             codesListContainer.appendChild(document.createElement("br"))
+//         }
+//     };
+//     reader.readAsText(file);
+//     document.getElementById("codesfile-label").innerText = file.name;
+//
+//     document.getElementById("allcodes").style.display = "inline";
+//     document.getElementById("listcodes").style.display = "inline";
 
 
     // TODO: set a list of codes checkboxes
-};
+// };
 
 // ==================================== D3 ========================================
 
@@ -182,18 +182,6 @@ d3.json("data/example.json", function (error, root) {
         tooltip.style("visibility", "hidden");
     }
 
-    // Get the total sum of a node TODO: use later, to show further details on categories
-    function getTotalSum(obj) {
-        if (obj.hasOwnProperty("value")) {
-            return obj.value;
-        }
-        var tmpSum = 0;
-        var c;
-        for (c of obj.children) {
-            tmpSum += getTotalSum(c);
-        }
-    }
-
     // ================================================ Utils ==========================================================
     function resetView() {
         // Zoom out
@@ -206,6 +194,7 @@ d3.json("data/example.json", function (error, root) {
     }
 
     function isCodeOrItsDescendentInSet(d, codesSet) {
+        // TODO: turn to iterative instead of recursive
         if (codesSet.has(d.data.name)) return true;
         if (!d.children) return codesSet.has(d.data.name);
         var child;
@@ -364,35 +353,29 @@ d3.json("data/example.json", function (error, root) {
     // ================================================ Search =========================================================
 
     document.getElementById("searchbox").addEventListener("submit", function(event) {
-        // TODO: show the search query in a designated text box
+        focus = root;
+        // TODO: Simulate behavior as in "show codes from list" - creaate an "or" search based on search terms
 
-        // TODO: show all categories and sub categories in a list.
-        codesFromList = false;
+        codesFromList = true;
 
         event.preventDefault();
 
         let input = document.getElementById('search-input');
-        let searchName = document.getElementById("search-code-name").checked;
-        let searchDesc = document.getElementById("search-code-desc").checked;
-        console.log("Searching for " + input.value + " in:" + (searchName ? " (code name)" : "") + (
-            searchDesc ? " (code description)" : ""));
+
         let lower_case_input = input.value.toLowerCase();
         if (lower_case_input === "" || lower_case_input === " ") {
             showAllCodes();
             return;
         }
 
-        // TODO: find the highest node that contains the search word,
-        //  OR - if there are search results in more than one of its children
-
         /**
          * @return {boolean}
          */
         var searchResults = new Set();
         function getSearchResults(d) {
-            if ((d.data.hasOwnProperty("description") && searchDesc &&
+            if ((d.data.hasOwnProperty("description") &&
                 d.data.description.toLocaleLowerCase().includes(lower_case_input)) ||
-                (searchName && d.data.name.toLocaleLowerCase().includes(lower_case_input))) {
+                (d.data.name.toLocaleLowerCase().includes(lower_case_input))) {
                 searchResults.add(d.data.name);
             }
         }
@@ -404,7 +387,7 @@ d3.json("data/example.json", function (error, root) {
                 d => isCodeOrItsDescendentInSet(d, searchResults)  || d.depth === 0 ? "inline" : "none");
 
         // TODO: Currently only displays text for all results (including parent nodes),
-        //  consider changing this so only displays text of top layer.
+        //  Change this so only displays text of top layer.
         setTextForCodesInSet(searchResults);
 
         resetView();
@@ -455,7 +438,6 @@ d3.json("data/example.json", function (error, root) {
         resetView();
     }
 
-    document.getElementById("listcodes").addEventListener("click", showListCodes);
     document.getElementById("allcodes").addEventListener("click", showAllCodes);
 
 
