@@ -123,8 +123,6 @@ d3.json("data/example.json", function (error, root) {
             // The deeper the node in the tree, the higher the opacity.
             return (d.depth + 1) / (maxDepth + 5);
         })
-        // Initially, only display first two levels of hierarchy
-        .style("display", d => d.depth < 2 ? "inline" : "none")
         .on("click", function (d) {
             if (focus !== d) zoom(d);
             d3.event.stopPropagation();
@@ -155,7 +153,10 @@ d3.json("data/example.json", function (error, root) {
     var node = g.selectAll("circle,text");
 
     svg.on("click", function () {
-        zoom(root);
+        zoom(focus.parent);
+    });
+    g.on("click", function () {
+        zoom(focus.parent);
     });
 
     zoomTo([root.x, root.y, root.r * 2 + margin]);
@@ -290,15 +291,9 @@ d3.json("data/example.json", function (error, root) {
         var transition = zoomTransitionToFocus();
 
         transition.selectAll("circle")
-            .filter(function (d) {
-                return d.depth < targetDepth + 2 || this.style.display === "inline";
-            })
-            .style("fill-opacity", function (d) {
-                return d.depth < targetDepth + 2 ? (d.depth + 1) / (maxDepth + 5) : 0;
-            })
             .on("start", function (d) {
-                // Hide non-ancestors and non-children
-                if (!isAncestor(d, focus) && !isChild(d, focus) && d !== focus) {
+                // Hide non-descendents
+                if (!isAncestor(focus, d) && d !== focus) {
                     this.style.display = "none";
                 }
                 // If we are only viewing codes from input file, make sure we don't display others.
@@ -308,9 +303,9 @@ d3.json("data/example.json", function (error, root) {
             })
             .on("end", function (d) {
                 // TODO: make this animated with duration
-                // Only display the ancestors and children of focus (and the focus node).
-                if (isAncestor(d, focus) || isChild(d, focus) || d === focus) {
-                    // If we are only viewing codes from input file, make sure we don't display others.
+                // Only display descendents of focus (and the focus node).
+                if (isAncestor(focus, d) || d === focus) {
+                    // If we are only viewing codes from a given list, make sure we don't display others.
                     if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) return;
                     this.style.display = "inline";
                 }
@@ -324,8 +319,8 @@ d3.json("data/example.json", function (error, root) {
                 return d.parent === focus ? 1 : 0;
             })
             .on("start", function (d) {
-                // Hide non-ancestors and non-children
-                if (!isAncestor(d, focus) && !isChild(d, focus) && d !== focus) {
+                // Hide non-children
+                if (!isChild(d, focus) && d !== focus) {
                     this.style.display = "none";
                 }
                 // If we are only viewing codes from input file, make sure we don't display others.
