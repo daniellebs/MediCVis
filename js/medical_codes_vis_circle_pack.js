@@ -1,49 +1,5 @@
-// Constant Parameters
-let SHOW_ALL_IN_SEARCH = false;
-
-
-
-var codesInput = new Set();
-// document.getElementById('codesfile').onchange = function(){
-//     var file = this.files[0];
-//
-//     var reader = new FileReader();
-//     reader.onload = function(progressEvent){
-//         console.log('Reading codes list from file ' + file.name);
-//
-//         let codes = new Set(this.result.split('\n'));
-//         for (c of codes) {
-//             c = c.replace(/\s+/g, '');
-//             codesInput.add(c);
-//         }
-//
-//         var codesListContainer = document.getElementById("codes-from-input");
-//         // TODO: Set checkboxes according to their code hierarchy.
-//         for (c of codesInput) {
-//             var checkbox = document.createElement("input");
-//             checkbox.type = "checkbox";
-//             checkbox.id = c + "-checkbox";
-//             checkbox.checked = true;
-//             var label = document.createElement("label");
-//             label.htmlFor =  checkbox.id;
-//             label.appendChild(document.createTextNode(c));
-//             codesListContainer.appendChild(checkbox);
-//             codesListContainer.appendChild(label);
-//             codesListContainer.appendChild(document.createElement("br"))
-//         }
-//     };
-//     reader.readAsText(file);
-//     document.getElementById("codesfile-label").innerText = file.name;
-//
-//     document.getElementById("allcodes").style.display = "inline";
-//     document.getElementById("listcodes").style.display = "inline";
-
-
-    // TODO: set a list of codes checkboxes
-// };
 
 // ==================================== D3 ========================================
-
 
 var svg = d3.select("svg");
 
@@ -68,8 +24,7 @@ var tooltip = d3.select("body")
     .style("border-width", "2px")
     .style("border-radius", "5px").style("padding", "4px");
 
-
-d3.json("data/icd10_full.json", function (error, root) {
+d3.json("data/example.json", function (error, root) {
     if (error) throw error;
 
     // Get maximal depth of the tree, to determine opacities of nodes.
@@ -292,14 +247,16 @@ d3.json("data/icd10_full.json", function (error, root) {
 
         var transition = zoomTransitionToFocus();
 
+        let checkedCodes = getCheckedCodes();
+
         transition.selectAll("circle")
             .on("start", function (d) {
                 // Hide non-descendents
                 if (!isAncestor(focus, d) && d !== focus) {
                     this.style.display = "none";
                 }
-                // If we are only viewing codes from input file, make sure we don't display others.
-                if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) {
+                // If we are only viewing codes from input, make sure we don't display others.
+                if (codesFromList && !checkedCodes.has(d.data.name)) {
                     this.style.display = "none";
                 }
             })
@@ -308,7 +265,7 @@ d3.json("data/icd10_full.json", function (error, root) {
                 // Only display descendents of focus (and the focus node).
                 if (isAncestor(focus, d) || d === focus) {
                     // If we are only viewing codes from a given list, make sure we don't display others.
-                    if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) return;
+                    if (codesFromList && !checkedCodes.has(d.data.name)) return;
                     this.style.display = "inline";
                 }
         });
@@ -322,8 +279,8 @@ d3.json("data/icd10_full.json", function (error, root) {
                 if (!isChild(d, focus) && d !== focus) {
                     this.style.display = "none";
                 }
-                // If we are only viewing codes from input file, make sure we don't display others.
-                if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) {
+                // If we are only viewing codes from input, make sure we don't display others.
+                if (codesFromList && !checkedCodes.has(d.data.name)) {
                     this.style.display = "none";
                 }
             })
@@ -333,7 +290,7 @@ d3.json("data/icd10_full.json", function (error, root) {
                     // Set font size according to zoomed in circles
                     let k = diameter / (focus.r * 2 + margin + 40);
                     this.style.fontSize = ((d.r/2.2) * k).toString() + "px";
-                    if (codesFromList && !isCodeOrItsDescendentInSet(d, codesInput)) return;
+                    if (codesFromList && !checkedCodes.has(d.data.name)) return;
                     this.style.display = "inline";
                 }
             });
@@ -361,6 +318,12 @@ d3.json("data/icd10_full.json", function (error, root) {
     }
 
     // ================================================ Search =========================================================
+
+    function ChangeElementsDisplayByCheckbox(elements, box_name, box_checked) {
+        elements.filter(d => d.data.name === box_name).each(function (d) {
+            this.style.display = box_checked ? "inline" : "none";
+        });
+    }
 
     document.getElementById("searchbox").addEventListener("submit", function(event) {
         focus = root;
@@ -396,34 +359,69 @@ d3.json("data/icd10_full.json", function (error, root) {
             }
         }
 
-
         // TODO: find a nicer way
         circle.each(d => getSearchResults(d));
+
+        // Sort results
+        searchResultsArr = Array.from(searchResults);
+        searchResultsArr.sort();
+
         console.log("Found " + searchResults.size + " results:");
         for (res of searchResults) {
             console.log(res);
         }
 
-        resetView();
+        circle.style("display",
+            d => searchResults.has(d.data.name) || d.depth === 0 ? "inline" : "none");
 
-        if (SHOW_ALL_IN_SEARCH) {
-            circle.style("fill",
-                d => searchResults.has(d.data.name) ? "#DD5A43" : "#94A5BC");
-        } else {
-            circle.style("display",
-                d => searchResults.has(d.data.name) || d.depth === 0 ? "inline" : "none");
-        }
 
         // TODO: Currently only displays text for all results (including parent nodes),
         //  Change this so only displays text of top layer.
         setTextForCodesInSet(searchResults);
 
         resetView();
+
+        var codesListContainer = document.getElementById("codes-from-input");
+        // Delete previous children
+        var child = codesListContainer.firstChild;
+        while (child) {
+            codesListContainer.removeChild(child);
+            child = codesListContainer.firstChild;
+        }
+
+        // Append new children
+        for (c of searchResultsArr) {
+            var checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = c + "-checkbox";
+            checkbox.checked = true;
+            checkbox.name = c;
+            var label = document.createElement("label");
+            label.htmlFor =  checkbox.id;
+            label.appendChild(document.createTextNode(c));
+            codesListContainer.appendChild(checkbox);
+            codesListContainer.appendChild(label);
+            codesListContainer.appendChild(document.createElement("br"));
+            
+            checkbox.addEventListener("change", function () {
+                let box_name = this.name;
+                let box_checked = this.checked;
+                ChangeElementsDisplayByCheckbox(circle, box_name, box_checked);
+                ChangeElementsDisplayByCheckbox(text, box_name, box_checked);
+            });
+        }
     });
 
     // =============================================== Code List =======================================================
     function showAllCodes() {
         codesFromList = false;
+        // Delete all checkboxes
+        var codesListContainer = document.getElementById("codes-from-input");
+        var child = codesListContainer.firstChild;
+        while (child) {
+            codesListContainer.removeChild(child);
+            child = codesListContainer.firstChild;
+        }
         console.log("Resetting view.");
 
         circle.each(function (d) {
@@ -438,6 +436,9 @@ d3.json("data/icd10_full.json", function (error, root) {
         });
 
         resetView();
+
+        // Clear search box
+        document.getElementById("search-input").value = "";
     }
 
     function showListCodes() {
