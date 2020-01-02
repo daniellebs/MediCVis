@@ -1,3 +1,7 @@
+// Constant Parameters
+let SHOW_ALL_IN_SEARCH = false;
+
+
 
 var codesInput = new Set();
 // document.getElementById('codesfile').onchange = function(){
@@ -65,7 +69,7 @@ var tooltip = d3.select("body")
     .style("border-radius", "5px").style("padding", "4px");
 
 
-d3.json("data/example.json", function (error, root) {
+d3.json("data/icd10_full.json", function (error, root) {
     if (error) throw error;
 
     // Get maximal depth of the tree, to determine opacities of nodes.
@@ -132,6 +136,14 @@ d3.json("data/example.json", function (error, root) {
         .on("mouseover", mouseover)
         .on("mousemove", mousemove)
         .on("mouseleave", mouseleave);
+
+    // Set constant minimum circle size
+    // TODO: consider changing this so the minimum size depends on the specific hierarchy structure.
+    circle.each(function(d) {
+       if (d.r < 0.1) {
+           d.r = 0.1;
+       }
+    });
 
     var text = g.selectAll("text")
         .data(nodes)
@@ -352,7 +364,8 @@ d3.json("data/example.json", function (error, root) {
 
     document.getElementById("searchbox").addEventListener("submit", function(event) {
         focus = root;
-        // TODO: Simulate behavior as in "show codes from list" - creaate an "or" search based on search terms
+        // TODO: Simulate behavior as in "show codes from list": Allow zooming in while search query stays.
+        // TODO: consider displaying all and only changing the colors.
 
         codesFromList = true;
 
@@ -373,6 +386,7 @@ d3.json("data/example.json", function (error, root) {
          */
         var searchResults = new Set();
         function getSearchResults(d) {
+            let searchTerm;
             for (searchTerm of searchTerms) {
                 if ((d.data.hasOwnProperty("description") &&
                     d.data.description.toLocaleLowerCase().includes(searchTerm)) ||
@@ -382,11 +396,23 @@ d3.json("data/example.json", function (error, root) {
             }
         }
 
+
         // TODO: find a nicer way
         circle.each(d => getSearchResults(d));
+        console.log("Found " + searchResults.size + " results:");
+        for (res of searchResults) {
+            console.log(res);
+        }
 
-        circle.style("display",
-            d => searchResults.has(d.data.name) || d.depth === 0 ? "inline" : "none");
+        resetView();
+
+        if (SHOW_ALL_IN_SEARCH) {
+            circle.style("fill",
+                d => searchResults.has(d.data.name) ? "#DD5A43" : "#94A5BC");
+        } else {
+            circle.style("display",
+                d => searchResults.has(d.data.name) || d.depth === 0 ? "inline" : "none");
+        }
 
         // TODO: Currently only displays text for all results (including parent nodes),
         //  Change this so only displays text of top layer.
