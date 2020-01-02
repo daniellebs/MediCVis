@@ -123,6 +123,7 @@ d3.json("data/example.json", function (error, root) {
             // The deeper the node in the tree, the higher the opacity.
             return (d.depth + 1) / (maxDepth + 5);
         })
+        .attr("name", d => d.data.name)
         .on("click", function (d) {
             if (focus !== d) zoom(d);
             d3.event.stopPropagation();
@@ -196,7 +197,7 @@ d3.json("data/example.json", function (error, root) {
     function isCodeOrItsDescendentInSet(d, codesSet) {
         // TODO: turn to iterative instead of recursive
         if (codesSet.has(d.data.name)) return true;
-        if (!d.children) return codesSet.has(d.data.name);
+        if (!d.hasOwnProperty("children") || d.children.empty) return codesSet.has(d.data.name);
         var child;
         for (child of d.children) {
             if (codesSet.has(child.data.name) || isCodeOrItsDescendentInSet(child, codesSet)) return true;
@@ -301,9 +302,6 @@ d3.json("data/example.json", function (error, root) {
         });
 
         transition.selectAll("text")
-            .filter(function (d) {
-                return d.parent === focus || this.style.display === "inline";
-            })
             .style("fill-opacity", function (d) {
                 return d.parent === focus ? 1 : 0;
             })
@@ -362,21 +360,25 @@ d3.json("data/example.json", function (error, root) {
 
         let input = document.getElementById('search-input');
 
-        let lower_case_input = input.value.toLowerCase();
-        if (lower_case_input === "" || lower_case_input === " ") {
+        if (input.value.trim() === "") {
             showAllCodes();
             return;
         }
+
+        let lowerCaseSearchInput = input.value.toLowerCase();
+        let searchTerms = lowerCaseSearchInput.split(/[ ,\n]+/);
 
         /**
          * @return {boolean}
          */
         var searchResults = new Set();
         function getSearchResults(d) {
-            if ((d.data.hasOwnProperty("description") &&
-                d.data.description.toLocaleLowerCase().includes(lower_case_input)) ||
-                (d.data.name.toLocaleLowerCase().includes(lower_case_input))) {
-                searchResults.add(d.data.name);
+            for (searchTerm of searchTerms) {
+                if ((d.data.hasOwnProperty("description") &&
+                    d.data.description.toLocaleLowerCase().includes(searchTerm)) ||
+                    (d.data.name.toLocaleLowerCase().includes(searchTerm))) {
+                    searchResults.add(d.data.name);
+                }
             }
         }
 
@@ -384,7 +386,7 @@ d3.json("data/example.json", function (error, root) {
         circle.each(d => getSearchResults(d));
 
         circle.style("display",
-                d => isCodeOrItsDescendentInSet(d, searchResults)  || d.depth === 0 ? "inline" : "none");
+            d => searchResults.has(d.data.name) || d.depth === 0 ? "inline" : "none");
 
         // TODO: Currently only displays text for all results (including parent nodes),
         //  Change this so only displays text of top layer.
