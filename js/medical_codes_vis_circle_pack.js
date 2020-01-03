@@ -1,20 +1,20 @@
 
 // ==================================== D3 ========================================
 
-var svg = d3.select("svg");
+const svg = d3.select("svg");
 
-var margin = 20,
+const margin = 20,
     diameter = +svg.attr("width"),
     g = svg.append("g").attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")"),
     width = 800,
     height = 600;
 
 
-var pack = d3.pack()
+const pack = d3.pack()
     .size([width, height - 50])
     .padding(10);
 
-var tooltip = d3.select("body")
+const tooltip = d3.select("body")
     .append("div")
     .style("position", "absolute")
     .style("z-index", "10")
@@ -29,10 +29,10 @@ d3.json("data/example.json", function (error, root) {
 
     // Get maximal depth of the tree, to determine opacities of nodes.
     function getDepth(obj) {
-        var depth = 0;
+        let depth = 0;
         if (obj.children) {
             obj.children.forEach(function (d) {
-                var tmpDepth = getDepth(d);
+                const tmpDepth = getDepth(d);
                 if (tmpDepth > depth) {
                     depth = tmpDepth
                 }
@@ -41,10 +41,10 @@ d3.json("data/example.json", function (error, root) {
         return 1 + depth
     }
 
-    maxDepth = getDepth(root);
+    const maxDepth = getDepth(root);
     console.log("Hierarchy maximal depth is " + maxDepth);
 
-    var codesFromList = false;
+    let codesFromList = false;
 
     let color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, root.children.length + 2));
 
@@ -56,7 +56,7 @@ d3.json("data/example.json", function (error, root) {
             return b.value - a.value;
         });
 
-    var focus = root,
+    let focus = root,
         nodes = pack(root).descendants(),
         view;
 
@@ -71,7 +71,7 @@ d3.json("data/example.json", function (error, root) {
         return color(d.data.name);
     }
 
-    var circle = g.selectAll("circle")
+    let circle = g.selectAll("circle")
         .data(nodes)
         .enter().append("circle")
         .attr("class", function (d) {
@@ -100,7 +100,7 @@ d3.json("data/example.json", function (error, root) {
        }
     });
 
-    var text = g.selectAll("text")
+    let text = g.selectAll("text")
         .data(nodes)
         .enter().append("text")
         .attr("class", "circle-label")
@@ -118,7 +118,7 @@ d3.json("data/example.json", function (error, root) {
             return d.data.name;
         });
 
-    var node = g.selectAll("circle,text");
+    let node = g.selectAll("circle,text");
 
     svg.on("click", function () {
         zoom(focus.parent);
@@ -130,12 +130,12 @@ d3.json("data/example.json", function (error, root) {
     zoomTo([root.x, root.y, root.r * 2 + margin]);
 	
 	// Update Breadcrumbs
-	var codePathElement = document.getElementById("code-path");
+	let codePathElement = document.getElementById("code-path");
 	codePathElement.innerHTML = "<b>You Are Here: </b> &rarr;" + root.data.name;
 
     // Three function that change the tooltip when user hover / move / leave a cell
     function mouseover(d) {
-        var desc = "";
+        let desc = "";
         if (d.data.hasOwnProperty("description")) {
             desc = ": " + d.data.description;
         }
@@ -157,7 +157,7 @@ d3.json("data/example.json", function (error, root) {
         zoomTransitionToFocus();
 
         // Update Breadcrumbs
-        var codePathElement = document.getElementById("code-path");
+        let codePathElement = document.getElementById("code-path");
         codePathElement.innerHTML = "<b>You Are Here: </b> &rarr;" + root.data.name;
     }
 
@@ -165,7 +165,7 @@ d3.json("data/example.json", function (error, root) {
         // TODO: turn to iterative instead of recursive
         if (codesSet.has(d.data.name)) return true;
         if (!d.hasOwnProperty("children") || d.children.empty) return codesSet.has(d.data.name);
-        var child;
+        let child;
         for (child of d.children) {
             if (codesSet.has(child.data.name) || isCodeOrItsDescendentInSet(child, codesSet)) return true;
         }
@@ -193,7 +193,7 @@ d3.json("data/example.json", function (error, root) {
         if (potentialChild.depth <= node.depth || !node.children) {
             return false;
         }
-        var child;
+        let child;
         for (child of node.children) {
             if (child.data.name === potentialChild.data.name) {
                 return true;
@@ -217,6 +217,7 @@ d3.json("data/example.json", function (error, root) {
 
     function getCheckedCodes(checkedCodes) {
         checkedCodes = new Set();
+        let c;
         for (c of document.getElementById("codes-from-input").children) {
             if (c.tagName === "INPUT" && c.checked) {
                 checkedCodes.add(c.id.split("-")[0]);
@@ -230,7 +231,7 @@ d3.json("data/example.json", function (error, root) {
         return d3.transition()
             .duration(750)
             .tween("zoom", function (d) {
-                var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
+                let i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
                 return function (t) {
                     zoomTo(i(t));
                 };
@@ -238,14 +239,13 @@ d3.json("data/example.json", function (error, root) {
     }
 
     function zoom(d) {
-        let targetDepth = d.depth;
         focus = d;
         if (!focus.children) {
             // We don't zoom in on leaves
             return;
         }
 
-        var transition = zoomTransitionToFocus();
+        let transition = zoomTransitionToFocus();
 
         let checkedCodes = getCheckedCodes();
 
@@ -296,9 +296,9 @@ d3.json("data/example.json", function (error, root) {
             });
 
         // Update Breadcrumbs
-        var codePathElement = document.getElementById("code-path");
-        var codePath = "";
-        var currentNode = focus;
+        let codePathElement = document.getElementById("code-path");
+        let codePath = "";
+        let currentNode = focus;
         while (currentNode != null) {
             codePath = "&rarr;" + currentNode.data.name + codePath;
             currentNode = currentNode.parent;
@@ -307,7 +307,7 @@ d3.json("data/example.json", function (error, root) {
     }
 
     function zoomTo(v) {
-        var k = diameter / v[2];
+        let k = diameter / v[2];
         view = v;
         node.attr("transform", function (d) {
             return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
@@ -347,7 +347,7 @@ d3.json("data/example.json", function (error, root) {
         /**
          * @return {boolean}
          */
-        var searchResults = new Set();
+        let searchResults = new Set();
         function getSearchResults(d) {
             let searchTerm;
             for (searchTerm of searchTerms) {
@@ -363,7 +363,7 @@ d3.json("data/example.json", function (error, root) {
         circle.each(d => getSearchResults(d));
 
         // Sort results
-        searchResultsArr = Array.from(searchResults);
+        let searchResultsArr = Array.from(searchResults);
         searchResultsArr.sort();
 
         console.log("Found " + searchResults.size + " results:");
@@ -381,22 +381,23 @@ d3.json("data/example.json", function (error, root) {
 
         resetView();
 
-        var codesListContainer = document.getElementById("codes-from-input");
+        let codesListContainer = document.getElementById("codes-from-input");
         // Delete previous children
-        var child = codesListContainer.firstChild;
+        let child = codesListContainer.firstChild;
         while (child) {
             codesListContainer.removeChild(child);
             child = codesListContainer.firstChild;
         }
 
         // Append new children
+        let c;
         for (c of searchResultsArr) {
-            var checkbox = document.createElement("input");
+            let checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.id = c + "-checkbox";
             checkbox.checked = true;
             checkbox.name = c;
-            var label = document.createElement("label");
+            let label = document.createElement("label");
             label.htmlFor =  checkbox.id;
             label.appendChild(document.createTextNode(c));
             codesListContainer.appendChild(checkbox);
@@ -412,12 +413,12 @@ d3.json("data/example.json", function (error, root) {
         }
     });
 
-    // =============================================== Code List =======================================================
+    // ============================================ Show All Codes =====================================================
     function showAllCodes() {
         codesFromList = false;
         // Delete all checkboxes
-        var codesListContainer = document.getElementById("codes-from-input");
-        var child = codesListContainer.firstChild;
+        let codesListContainer = document.getElementById("codes-from-input");
+        let child = codesListContainer.firstChild;
         while (child) {
             codesListContainer.removeChild(child);
             child = codesListContainer.firstChild;
@@ -439,32 +440,6 @@ d3.json("data/example.json", function (error, root) {
 
         // Clear search box
         document.getElementById("search-input").value = "";
-    }
-
-    function showListCodes() {
-        codesFromList = true;
-        console.log("Showing codes from input file.");
-        document.getElementById("allcodes").disabled = false;
-
-        var checkedCodes = getCheckedCodes();
-        console.log(checkedCodes);
-
-        // Display circles for codes from list
-        circle.each(function (d) {
-            if (isCodeOrItsDescendentInSet(d, checkedCodes)) {
-                let checkbox = document.getElementById(d.data.name + "-checkbox");
-                console.log("Displaying code " + d.data.name);
-                this.style.display = "inline";
-                this.style.fill = (checkbox != null && checkbox.checked) ? "#DD5A43" : "#94A5BC";
-            } else {
-                this.style.display = "none";
-            }
-        });
-
-        // Display text for codes from list
-        setTextForCodesInSet(checkedCodes);
-
-        resetView();
     }
 
     document.getElementById("allcodes").addEventListener("click", showAllCodes);
