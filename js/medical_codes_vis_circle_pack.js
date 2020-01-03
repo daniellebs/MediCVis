@@ -1,3 +1,26 @@
+function shadeColor(rgbColor, percent) {
+    let colors = rgbColor.replace("rgb","").replace("(","")
+        .replace(")","").split(",");
+
+    var R = parseInt(colors[0]);
+    var G = parseInt(colors[1]);
+    var B = parseInt(colors[2]);
+
+    R = parseInt(R * (100 + percent) / 100);
+    G = parseInt(G * (100 + percent) / 100);
+    B = parseInt(B * (100 + percent) / 100);
+
+    R = (R<255)?R:255;
+    G = (G<255)?G:255;
+    B = (B<255)?B:255;
+
+    var RR = ((R.toString(16).length==1)?"0"+R.toString(16):R.toString(16));
+    var GG = ((G.toString(16).length==1)?"0"+G.toString(16):G.toString(16));
+    var BB = ((B.toString(16).length==1)?"0"+B.toString(16):B.toString(16));
+
+    return "#"+RR+GG+BB;
+}
+
 
 // ==================================== D3 ========================================
 
@@ -24,7 +47,7 @@ const tooltip = d3.select("body")
     .style("border-width", "2px")
     .style("border-radius", "5px").style("padding", "4px");
 
-d3.json("data/example.json", function (error, root) {
+d3.json("data/icd10_full.json", function (error, root) {
     if (error) throw error;
 
     // Get maximal depth of the tree, to determine opacities of nodes.
@@ -78,6 +101,9 @@ d3.json("data/example.json", function (error, root) {
             return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root";
         })
         .style("fill", getColorByCategory)
+        .style("stroke", function(d) {
+            return shadeColor(getColorByCategory(d), -20);
+        })
         .attr("fill-opacity", function (d) {
             // The deeper the node in the tree, the higher the opacity.
             return (d.depth + 1) / (maxDepth + 5);
