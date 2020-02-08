@@ -26,8 +26,7 @@ function shadeColor(rgbColor, percent) {
 
 const svg = d3.select("svg");
 
-const margin = 20,
-    diameter = +svg.attr("width"),
+const diameter = +svg.attr("width"),
     g = svg.append("g").attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")"),
     width = 800,
     height = 600;
@@ -47,7 +46,7 @@ const tooltip = d3.select("body")
     .style("border-width", "2px")
     .style("border-radius", "5px").style("padding", "4px");
 
-d3.json("data/icd10_full.json", function (error, root) {
+d3.json("data/example.json", function (error, root) {
     if (error) throw error;
 
     // Get maximal depth of the tree, to determine opacities of nodes.
@@ -154,7 +153,7 @@ d3.json("data/icd10_full.json", function (error, root) {
         zoom(focus.parent);
     });
 
-    zoomTo([root.x, root.y, root.r + margin]);
+    zoomTo([root.x, root.y, root.r]);
 	
 	// Update Breadcrumbs
 	let codePathElement = document.getElementById("code-path");
@@ -258,7 +257,6 @@ d3.json("data/icd10_full.json", function (error, root) {
         return d3.transition()
             .duration(750)
             .tween("zoom", function (d) {
-                // let i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
                 let interpolator = d3.interpolateZoom(view, [focus.x, focus.y, focus.r]);
                 return function (t) {
                     zoomTo(interpolator(t));
