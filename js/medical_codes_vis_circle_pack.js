@@ -105,7 +105,8 @@ d3.json("data/icd10_full.json", function (error, root) {
             return shadeColor(getColorByCategory(d), -20);
         })
         .attr("fill-opacity", function (d) {
-            // The deeper the node in the tree, the higher the opacity.
+            // The deeper the node in the tree, the higher the opacity (which accumulates along the deeper layers)
+            // We add 1 to the depth only so the root (depth=0) still has opacity>0.
             return (d.depth + 1) / (maxDepth + 5);
         })
         .attr("name", d => d.data.name)
@@ -147,13 +148,13 @@ d3.json("data/icd10_full.json", function (error, root) {
     let node = g.selectAll("circle,text");
 
     svg.on("click", function () {
-        zoom(focus.parent);
+        if (focus.parent != null)  zoom(focus.parent);
     });
     g.on("click", function () {
         zoom(focus.parent);
     });
 
-    zoomTo([root.x, root.y, root.r * 2 + margin]);
+    zoomTo([root.x, root.y, root.r + margin]);
 	
 	// Update Breadcrumbs
 	let codePathElement = document.getElementById("code-path");
@@ -257,9 +258,10 @@ d3.json("data/icd10_full.json", function (error, root) {
         return d3.transition()
             .duration(750)
             .tween("zoom", function (d) {
-                let i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
+                // let i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
+                let interpolator = d3.interpolateZoom(view, [focus.x, focus.y, focus.r]);
                 return function (t) {
-                    zoomTo(i(t));
+                    zoomTo(interpolator(t));
                 };
             });
     }
@@ -301,21 +303,15 @@ d3.json("data/icd10_full.json", function (error, root) {
                 return d.parent === focus ? 1 : 0;
             })
             .on("start", function (d) {
-                // Hide non-children
-                if (!isChild(d, focus) && d !== focus) {
-                    this.style.display = "none";
-                }
-                // If we are only viewing codes from input, make sure we don't display others.
-                if (codesFromList && !checkedCodes.has(d.data.name)) {
-                    this.style.display = "none";
-                }
+                this.style.display = "none"
             })
             .on("end", function (d) {
                 // TODO: make this animated with duration
                 if (d.parent === focus) {
+                    // TODO: consider removing text for codes that are not on the list
                     // Set font size according to zoomed in circles
-                    let k = diameter / (focus.r * 2 + margin + 40);
-                    this.style.fontSize = ((d.r/2.2) * k).toString() + "px";
+                    let k = diameter / (focus.r * 2);
+                    this.style.fontSize = ((d.r * k) / 2.2).toString() + "px";
                     if (codesFromList && !checkedCodes.has(d.data.name)) return;
                     this.style.display = "inline";
                 }
@@ -333,10 +329,13 @@ d3.json("data/icd10_full.json", function (error, root) {
     }
 
     function zoomTo(v) {
-        let k = diameter / v[2];
+        let x = v[0],
+            y = v[1],
+            r = v[2];
+        let k = diameter / (2 * r);
         view = v;
         node.attr("transform", function (d) {
-            return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
+            return "translate(" + (d.x - x) * k + "," + (d.y - y) * k + ")";
         });
         circle.attr("r", function (d) {
             return d.r * k;
