@@ -188,12 +188,18 @@ d3.json("data/icd10_full.json", function (error, root) {
     }
 
     function isCodeOrItsDescendentInSet(d, codesSet) {
-        // TODO: turn to iterative instead of recursive
-        if (codesSet.has(d.data.name)) return true;
-        if (!d.hasOwnProperty("children") || d.children.empty) return codesSet.has(d.data.name);
-        let child;
-        for (child of d.children) {
-            if (codesSet.has(child.data.name) || isCodeOrItsDescendentInSet(child, codesSet)) return true;
+        // Non recursive DFS
+        let nodesToVisit = [d];
+        while (nodesToVisit.length > 0) {
+            let currentNode = nodesToVisit.shift();
+            if (codesSet.has(currentNode.data.name)) return true;
+
+            if (currentNode.hasOwnProperty("children")  && currentNode.children.length > 0) {
+                for (let c of currentNode.children) {
+                    nodesToVisit.push(c);
+                }
+            }
+
         }
         return false;
     }
@@ -282,17 +288,12 @@ d3.json("data/icd10_full.json", function (error, root) {
                 if (!isAncestor(focus, d) && d !== focus) {
                     this.style.display = "none";
                 }
-                // If we are only viewing codes from input, make sure we don't display others.
-                if (codesFromList && !checkedCodes.has(d.data.name)) {
-                    this.style.display = "none";
-                }
             })
             .on("end", function (d) {
-                // TODO: make this animated with duration
                 // Only display descendents of focus (and the focus node).
                 if (isAncestor(focus, d) || d === focus) {
                     // If we are only viewing codes from a given list, make sure we don't display others.
-                    if (codesFromList && !checkedCodes.has(d.data.name)) return;
+                    if (codesFromList && !isCodeOrItsDescendentInSet(d, checkedCodes)) return;
                     this.style.display = "inline";
                 }
         });
@@ -390,13 +391,16 @@ d3.json("data/icd10_full.json", function (error, root) {
         let searchResultsArr = Array.from(searchResults);
         searchResultsArr.sort();
 
-        console.log("Found " + searchResults.size + " results:");
-        for (res of searchResults) {
-            console.log(res);
-        }
+        console.log("Found " + searchResults.size + " results.");
 
-        circle.style("display",
-            d => searchResults.has(d.data.name) || d.depth === 0 ? "inline" : "none");
+        circle.each(function (d) {
+            let shouldBeDisplayed = isCodeOrItsDescendentInSet(d,searchResults);
+            this.style.display = shouldBeDisplayed ? "inline" : "none";
+
+            // Set nodes that are not actually search results to gray.
+            this.style.fill = searchResults.has(d.data.name) ? getColorByCategory(d) : "#E8E8E8";
+        });
+
 
 
         // TODO: Currently only displays text for all results (including parent nodes),
