@@ -46,7 +46,7 @@ const tooltip = d3.select("body")
     .style("border-width", "2px")
     .style("border-radius", "5px").style("padding", "4px");
 
-d3.json("data/example.json", function (error, root) {
+d3.json("data/icd10_full.json", function (error, root) {
     if (error) throw error;
 
     // Get maximal depth of the tree, to determine opacities of nodes.
@@ -265,6 +265,7 @@ d3.json("data/example.json", function (error, root) {
     }
 
     function zoom(d) {
+        console.log(focus);
         focus = d;
         if (!focus.children) {
             // We don't zoom in on leaves
